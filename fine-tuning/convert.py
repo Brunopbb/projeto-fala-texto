@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import librosa
 from datasets import load_dataset
 from tqdm import tqdm
 
@@ -20,7 +21,6 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 
 # 📌 Função para copiar os áudios para o diretório local
 def copy_audio(audio_path, local_path):
-    # Verifica se o arquivo já existe antes de copiá-lo
     if not os.path.exists(local_path):
         shutil.copy(audio_path, local_path)
         print(f"Áudio {os.path.basename(local_path)} copiado com sucesso.")
@@ -29,28 +29,29 @@ def copy_audio(audio_path, local_path):
 
 # 📌 Converter para formato NeMo e garantir que os áudios sejam copiados
 def convert_to_nemo_json(split, dataset):
-    data = []
-    for example in tqdm(dataset[split]):
-        if example["audio"]["array"] is None:
-            continue
-        
-        # Caminho do áudio local
-        audio_path = example["audio"]["path"]
-        local_audio_path = os.path.join(AUDIO_DIR, os.path.basename(audio_path))
-
-        # Copiar o áudio para a pasta local
-        copy_audio(audio_path, local_audio_path)
-
-        # Adicionar dados ao JSON
-        data.append({
-            "audio_filepath": local_audio_path,
-            "text": example["sentence"]
-        })
-
-    # Salvar o arquivo JSON
-    json_path = os.path.join(OUTPUT_PATH, f"{split}.json")
+    json_path = os.path.join(OUTPUT_PATH, f"{split}.jsonl")
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        for example in tqdm(dataset[split]):
+            if example["audio"]["array"] is None:
+                continue
+            
+            # Caminho do áudio local
+            audio_path = example["audio"]["path"]
+            local_audio_path = os.path.join(AUDIO_DIR, os.path.basename(audio_path))
+
+            # Copiar o áudio para a pasta local
+            copy_audio(audio_path, local_audio_path)
+
+            # Obter duração do áudio
+            duration = librosa.get_duration(path=local_audio_path)
+
+            # Adicionar dados ao JSONL
+            json_line = json.dumps({
+                "audio_filepath": local_audio_path,
+                "text": example["sentence"],
+                "duration": duration
+            }, ensure_ascii=False)
+            f.write(json_line + "\n")
     print(f"✅ Arquivo salvo: {json_path}")
 
 # Gerar arquivos de treino, validação e teste
