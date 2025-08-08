@@ -2,3 +2,5 @@ https://medium.com/the-modern-scientist/detailed-explanations-of-transformer-ste
 https://medium.com/the-modern-scientist/an-in-depth-look-at-the-transformer-based-models-22e5f5d17b6b
 
 https://towardsdatascience.com/illustrated-guide-to-transformers-step-by-step-explanation-f74876522bc0
+
+https://github.com/mml-book/mml-book.github.io
